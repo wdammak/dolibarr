@@ -95,7 +95,7 @@ $search_array_options=$extrafields->getOptionalsFromPost($extralabels,'','search
 $arrayfields=array(
     'm.rowid'=>array('label'=>$langs->trans("Ref"), 'checked'=>1),
     'm.datem'=>array('label'=>$langs->trans("Date"), 'checked'=>1),
-    'p.ref'=>array('label'=>$langs->trans("ProductRef"), 'checked'=>1),
+    'p.ref'=>array('label'=>$langs->trans("NumberOfDifferentProducts"), 'checked'=>1),
     'p.label'=>array('label'=>$langs->trans("ProductLabel"), 'checked'=>1),
     'm.batch'=>array('label'=>$langs->trans("BatchNumberShort"), 'checked'=>1, 'enabled'=>(! empty($conf->productbatch->enabled))),
     'pl.eatby'=>array('label'=>$langs->trans("EatByDate"), 'checked'=>0, 'enabled'=>(! empty($conf->productbatch->enabled))),
@@ -106,7 +106,7 @@ $arrayfields=array(
     'm.label'=>array('label'=>$langs->trans("LabelMovement"), 'checked'=>1),
     'm.type_mouvement'=>array('label'=>$langs->trans("Type Mouvement"), 'checked'=>1),
     'origin'=>array('label'=>$langs->trans("Origin"), 'checked'=>1),
-	'm.value'=>array('label'=>$langs->trans("Qty"), 'checked'=>1),
+	'm.value'=>array('label'=>$langs->trans("NumberOfProducts"), 'checked'=>1),
 	'm.price'=>array('label'=>$langs->trans("UnitPurchaseValue"), 'checked'=>0),
 		//'m.datec'=>array('label'=>$langs->trans("DateCreation"), 'checked'=>0, 'position'=>500),
     //'m.tms'=>array('label'=>$langs->trans("DateModificationShort"), 'checked'=>0, 'position'=>500)
@@ -138,7 +138,7 @@ if (GETPOST('button_removefilter_x','alpha') || GETPOST('button_removefilter.x',
     $month='';
     $search_ref='';
     $search_movement="";
-    $search_type_mouvement="";
+	$search_type_mouvement="";
     $search_inventorycode="";
     $search_product_ref="";
     $search_product="";
@@ -476,9 +476,9 @@ $formother=new FormOther($db);
 $formproduct=new FormProduct($db);
 if (!empty($conf->projet->enabled)) $formproject=new FormProjets($db);
 
-$sql = "SELECT p.rowid, p.ref as product_ref, p.label as produit, p.tobatch, p.fk_product_type as type, p.entity,";
+$sql = "SELECT p.rowid, count(p.ref) as product_ref, p.label as produit, p.tobatch, p.fk_product_type as type, p.entity,";
 $sql.= " e.ref as stock, e.rowid as entrepot_id, e.lieu,";
-$sql.= " m.rowid as mid, m.value as qty, m.datem, m.fk_user_author, m.label, m.inventorycode, m.fk_origin, m.origintype,";
+$sql.= " m.rowid as mid, sum(m.value) as qty, m.datem, m.fk_user_author, m.label, m.inventorycode, m.fk_origin, m.origintype,";
 $sql.= " m.batch, m.price,";
 $sql.= " m.type_mouvement,";
 $sql.= " pl.rowid as lotid, pl.eatby, pl.sellby,";
@@ -522,13 +522,19 @@ if ($search_warehouse > 0)          $sql.= " AND e.rowid = '".$db->escape($searc
 if (! empty($search_user))          $sql.= natural_search('u.login', $search_user);
 if (! empty($search_batch))         $sql.= natural_search('m.batch', $search_batch);
 if ($search_qty != '')				$sql.= natural_search('m.value', $search_qty, 1);
-if ($search_type_mouvement)	$sql.= " AND m.type_mouvement = '".$db->escape($search_type_mouvement)."'";
+if ($search_type_mouvement > 0)		$sql.= " AND m.type_mouvement = '".$db->escape($search_type_mouvement)."'";
 // Add where from extra fields
 include DOL_DOCUMENT_ROOT.'/core/tpl/extrafields_list_search_sql.tpl.php';
 // Add where from hooks
 $parameters=array();
 $reshook=$hookmanager->executeHooks('printFieldListWhere',$parameters);    // Note that $action and $object may have been modified by hook
 $sql.=$hookmanager->resPrint;
+
+// Add group by inventorycode
+$sql.= " GROUP BY m.fk_entrepot, type_mouvement, m.inventorycode";
+
+if(!empty($inventorycode)) $sql.= " , m.rowid";
+
 $sql.= $db->order($sortfield,$sortorder);
 
 $nbtotalofrecords = '';
@@ -543,21 +549,13 @@ if (empty($conf->global->MAIN_DISABLE_FULL_SCANLIST))
     }
 }
 
-if(empty($search_inventorycode))
-{
-	$sql.= $db->plimit($limit+1, $offset);
-}
-else
-{
-	$limit = 0;
-}
+if(empty($search_inventorycode)) $sql.= $db->plimit($limit+1, $offset);
 
 //print $sql;
 
+$report= $sql;
+
 $resql = $db->query($sql);
-
-if(!empty($search_inventorycode)) $limit = $db->num_rows($resql);
-
 if ($resql)
 {
 	$product = new Product($db);
@@ -825,6 +823,7 @@ if ($resql)
 	    print '<input class="flat maxwidth100" type="text" name="search_product_ref" value="'.dol_escape_htmltag($idproduct?$product->ref:$search_product_ref).'">';
 	    print '</td>';
     }
+	/*
     if (! empty($arrayfields['p.label']['checked']))
     {
 	    // Product label
@@ -832,6 +831,7 @@ if ($resql)
 	    print '<input class="flat maxwidth100" type="text" name="search_product" value="'.dol_escape_htmltag($idproduct?$product->label:$search_product).'">';
 	    print '</td>';
     }
+	*/
     // Batch
     if (! empty($arrayfields['m.batch']['checked']))
     {
@@ -881,7 +881,7 @@ if ($resql)
 	    // Type of movement
 	    print '<td class="liste_titre" align="left">';
 	    //print '<input class="flat" type="text" size="3" name="search_type_mouvement" value="'.dol_escape_htmltag($search_type_mouvement).'">';
-		print '<select name="search_type_mouvement">';
+		print '<select name="search_type_mouvement" value="'.($search_type_mouvement).'">';
 		print '<option value="" '.(($search_type_mouvement=="")?'selected="selected"':'').'></option>';
 		print '<option value="0" '.(($search_type_mouvement=="0")?'selected="selected"':'').'>0</option>';
 		print '<option value="1" '.(($search_type_mouvement=="1")?'selected="selected"':'').'>1</option>';
@@ -945,7 +945,7 @@ if ($resql)
     if (! empty($arrayfields['m.rowid']['checked']))            print_liste_field_titre($arrayfields['m.rowid']['label'],$_SERVER["PHP_SELF"],'m.rowid','',$param,'',$sortfield,$sortorder);
     if (! empty($arrayfields['m.datem']['checked']))            print_liste_field_titre($arrayfields['m.datem']['label'],$_SERVER["PHP_SELF"],'m.datem','',$param,'',$sortfield,$sortorder);
     if (! empty($arrayfields['p.ref']['checked']))              print_liste_field_titre($arrayfields['p.ref']['label'],$_SERVER["PHP_SELF"],'p.ref','',$param,'',$sortfield,$sortorder);
-    if (! empty($arrayfields['p.label']['checked']))            print_liste_field_titre($arrayfields['p.label']['label'],$_SERVER["PHP_SELF"],'p.label','',$param,'',$sortfield,$sortorder);
+    //if (! empty($arrayfields['p.label']['checked']))            print_liste_field_titre($arrayfields['p.label']['label'],$_SERVER["PHP_SELF"],'p.label','',$param,'',$sortfield,$sortorder);
     if (! empty($arrayfields['m.batch']['checked']))            print_liste_field_titre($arrayfields['m.batch']['label'],$_SERVER["PHP_SELF"],'m.batch','',$param,'align="center"',$sortfield,$sortorder);
 	if (! empty($arrayfields['pl.eatby']['checked']))           print_liste_field_titre($arrayfields['pl.eatby']['label'],$_SERVER["PHP_SELF"],'pl.eatby','',$param,'align="center"',$sortfield,$sortorder);
 	if (! empty($arrayfields['pl.sellby']['checked']))          print_liste_field_titre($arrayfields['pl.sellby']['label'],$_SERVER["PHP_SELF"],'pl.sellby','',$param,'align="center"',$sortfield,$sortorder);
@@ -1021,20 +1021,21 @@ if ($resql)
         {
 	        // Product ref
 	        print '<td>';
-	        print $productstatic->getNomUrl(1,'stock',16);
+	        print $objp->product_ref;
 	        print "</td>\n";
         }
-        if (! empty($arrayfields['p.label']['checked']))
-        {
+		
+        // if (! empty($arrayfields['p.label']['checked']))
+        // {
 	        // Product label
-	        print '<td>';
+	    // 	print '<td>';
 	        /*$productstatic->id=$objp->rowid;
 	        $productstatic->ref=$objp->produit;
 	        $productstatic->type=$objp->type;
 	        print $productstatic->getNomUrl(1,'',16);*/
-	        print $productstatic->label;
-	        print "</td>\n";
-        }
+	    // 	print $productstatic->label;
+	    // 	print "</td>\n";
+        // }
         if (! empty($arrayfields['m.batch']['checked']))
         {
 	    	print '<td align="center">';
@@ -1067,7 +1068,15 @@ if ($resql)
         if (! empty($arrayfields['m.inventorycode']['checked']))
         {
 	        // Inventory code
-	        print '<td>'.$objp->inventorycode.'</td>';
+	        print '<td>'.'<a href="'
+								.DOL_URL_ROOT.'/product/stock/mouvement.php'
+								.'?id='.$objp->entrepot_id
+								.'&amp;search_inventorycode='.$objp->inventorycode							   
+							    .'&amp;search_type_mouvement='.$objp->type_mouvement
+						.'">'
+							.$objp->inventorycode
+						.'</a>'
+					.'</td>';
         }
         if (! empty($arrayfields['m.label']['checked']))
         {
@@ -1162,7 +1171,7 @@ else
 
 $modulepart='mouvement';
 
-if ($action != 'create' && $action != 'edit' && $action != 'delete' && $id>0)
+if ($action != 'create' && $action != 'edit' && $action != 'delete')
 {
 	print '<br/>';
     print '<div class="fichecenter"><div class="fichehalfleft">';
@@ -1170,13 +1179,10 @@ if ($action != 'create' && $action != 'edit' && $action != 'delete' && $id>0)
 
     // Documents
     $objectref = dol_sanitizeFileName($object->ref);
-	// Add inventorycode & type_mouvement to filename of the pdf
-	if(!empty($search_inventorycode)) $objectref.="_".$id."_".$search_inventorycode;
-	if($search_type_mouvement) $objectref.="_".$search_type_mouvement;
     $relativepath = $comref . '/' . $objectref . '.pdf';
     $filedir = $conf->stock->dir_output . '/mouvement/' . $objectref;
 	
-    $urlsource=$_SERVER["PHP_SELF"]."?id=".$object->id."&search_inventorycode=".$search_inventorycode."&search_type_mouvement=$search_type_mouvement";
+    $urlsource=$_SERVER["PHP_SELF"]."?id=".$object->id;
     $genallowed=$usercanread;
     $delallowed=$usercancreate;
 	
@@ -1185,7 +1191,7 @@ if ($action != 'create' && $action != 'edit' && $action != 'delete' && $id>0)
 	
     $var=true;
 
-    print $formfile->showdocuments($modulepart,$objectref,$filedir,$urlsource,$genallowed,$delallowed,'',0,0,0,28,0,'',0,'',$object->default_lang, '', $object);
+    print $formfile->showdocuments($modulepart,$object->ref,$filedir,$urlsource,$genallowed,$delallowed,'',0,0,0,28,0,'',0,'',$object->default_lang, '', $object);
     $somethingshown=$formfile->numoffiles;
 
     print '</div><div class="fichehalfright"><div class="ficheaddleft">';
