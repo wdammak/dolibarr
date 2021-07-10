@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Copyright (C) 2005      Rodolphe Quiedeville <rodolphe@quiedeville.org>
 -- Copyright (C) 2005-2017 Laurent Destailleur  <eldy@users.sourceforge.net>
--- Copyright (C) 2005-2009 Regis Houssin        <regis.houssin@capnetworks.com>
+-- Copyright (C) 2005-2009 Regis Houssin        <regis.houssin@inodbox.com>
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 -- GNU General Public License for more details.
 --
 -- You should have received a copy of the GNU General Public License
--- along with this program. If not, see <http://www.gnu.org/licenses/>.
+-- along with this program. If not, see <https://www.gnu.org/licenses/>.
 --
 -- ===========================================================================
 
@@ -24,7 +24,7 @@ create table llx_usergroup
   nom           varchar(180) NOT NULL,
   entity        integer DEFAULT 1 NOT NULL,	-- multi company id
   datec         datetime,
-  tms           timestamp,
+  tms           timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   note          text,
   model_pdf     varchar(255) DEFAULT NULL
 )ENGINE=innodb;

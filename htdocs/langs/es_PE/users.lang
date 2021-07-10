@@ -1,0 +1,6 @@
+# Dolibarr language file - Source file is en_US - users
+DisableUser=Inhabilitar
+DeleteUser=Borrar
+DeleteGroup=Borrar
+NbOfUsers=No. of users
+NbOfPermissions=No. of permissions

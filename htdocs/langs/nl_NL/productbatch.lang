@@ -1,8 +1,10 @@
-# ProductBATCH language file - en_US - ProductBATCH
+# ProductBATCH language file - Source file is en_US - ProductBATCH
 ManageLotSerial=Gebruik lot / serienummer
-ProductStatusOnBatch=Ja (lot / serienummer vereist)
+ProductStatusOnBatch=Ja (lot vereist)
+ProductStatusOnSerial=Ja (uniek serienummer vereist)
 ProductStatusNotOnBatch=Nee (lot / serial niet gebruikt)
-ProductStatusOnBatchShort=Ja
+ProductStatusOnBatchShort=Lot
+ProductStatusOnSerialShort=Serienummer
 ProductStatusNotOnBatchShort=Nee
 Batch=Lot / Serienummer
 atleast1batchfield=Vervaldatum of uiterste verkoopdatum of Lot / Serienummer
@@ -16,9 +18,28 @@ printEatby=Verval: %s
 printSellby=Verkoop: %s
 printQty=Aantal: %d
 AddDispatchBatchLine=Voeg een regel toe voor houdbaarheids ontvangst
-WhenProductBatchModuleOnOptionAreForced=Als de module Lot/Serial is ingeschakeld, automatische modus voor verhoging/verlaging van voorraad wordt geforceerd naar handmatig valideren van verzending en handmatig afhandelen van ontvangst en kan niet worden bewerkt. Andere opties kunnen gedefinieerd worden zoals u wilt.
+WhenProductBatchModuleOnOptionAreForced=Wanneer module Lot / Serie is ingeschakeld, wordt de automatische voorraadafname gedwongen om 'werkelijke voorraad bij de verzendvalidatie te verlagen' en wordt de automatische toenamemodus gedwongen om 'Verhoog voorraad bij handmatig verzenden naar magazijnen ' te verhogen en kan deze niet worden bewerkt. Andere opties kunnen worden gedefinieerd zoals u dat wilt.
 ProductDoesNotUseBatchSerial=Dit product maakt geen gebruik van lot/serial nummer
 ProductLotSetup=Module instellingen voor lot/serial
 ShowCurrentStockOfLot=Toon huidige voorraad voor product/lot paar
 ShowLogOfMovementIfLot=Toon bewegingslogboek voor product/lot paar
 StockDetailPerBatch=Voorraad details per lot
+SerialNumberAlreadyInUse=Serienummer %s wordt al gebruikt voor product %s
+TooManyQtyForSerialNumber=U kunt slechts één product %s hebben voor serienummer %s
+BatchLotNumberingModules=Opties voor het automatisch genereren van batchproducten beheerd door partijen
+BatchSerialNumberingModules=Opties voor het automatisch genereren van batchproducten beheerd door serienummers
+ManageLotMask=Aangepast masker
+CustomMasks=Voegt een optie toe om masker te definiëren in de productkaart
+LotProductTooltip=Voegt een optie toe aan de productkaart om een speciaal batchnummermasker te definiëren
+SNProductTooltip=Voegt een optie toe aan de productkaart om een speciaal serienummermasker te definiëren
+QtyToAddAfterBarcodeScan=Aantal toe te voegen voor elke gescande barcode/lot/serie
+LifeTime=Levensduur (in dagen)
+EndOfLife=Einde van het leven
+ManufacturingDate=Fabricage datum
+DestructionDate=Vernietigingsdatum:
+FirstUseDate=Datum eerste gebruik
+QCFrequency=Frequentie kwaliteitscontrole (in dagen)
+
+#Traceability - qc status
+OutOfOrder=Buiten gebruik
+InWorkingOrder=In werkende staat

@@ -1,6 +1,6 @@
 -- ============================================================================
 -- Copyright (C) 2002-2003	Rodolphe Quiedeville	<rodolphe@quiedeville.org>
--- Copyright (C) 2005-2012	Regis Houssin			<regis.houssin@capnetworks.com>
+-- Copyright (C) 2005-2012	Regis Houssin			<regis.houssin@inodbox.com>
 -- Copyright (C) 2010		Juanjo Menent			<jmenent@2byte.es>
 -- Copyright (C) 2012		Maxime Kohlhaas			<maxime.kohlhaas@atm-consulting.fr>
 --
@@ -15,7 +15,7 @@
 -- GNU General Public License for more details.
 --
 -- You should have received a copy of the GNU General Public License
--- along with this program. If not, see <http://www.gnu.org/licenses/>.
+-- along with this program. If not, see <https://www.gnu.org/licenses/>.
 --
 -- This table is used to defined price by qty when a line into llx_product_price 
 -- is set with price_by_qty = 1
@@ -40,6 +40,6 @@ create table llx_product_price_by_qty
   multicurrency_price	double(24,8) DEFAULT NULL,
   multicurrency_price_ttc	double(24,8) DEFAULT NULL,
   
-  tms				timestamp,
+  tms				timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   import_key    	varchar(14)
 )ENGINE=innodb;

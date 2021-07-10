@@ -1,6 +1,6 @@
 <?php
 /* Copyright (C) 2017      Laurent Destailleur <eldy@users.sourceforge.net>
- * Copyright (C) 2018      Alexandre Spangaro  <aspangaro@zendsi.com>
+ * Copyright (C) 2018      Alexandre Spangaro  <aspangaro@open-dsi.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
 /**
@@ -22,9 +22,7 @@
  * \brief       This file is a CRUD class file for asset (Create/Read/Update/Delete)
  */
 
-require_once DOL_DOCUMENT_ROOT . '/core/class/commonobject.class.php';
-//require_once DOL_DOCUMENT_ROOT . '/societe/class/societe.class.php';
-//require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/class/commonobject.class.php';
 
 /**
  * Class for Asset
@@ -35,22 +33,30 @@ class Asset extends CommonObject
 	 * @var string ID to identify managed object
 	 */
 	public $element = 'asset';
+
 	/**
 	 * @var string Name of table without prefix where object is stored
 	 */
 	public $table_element = 'asset';
+
 	/**
 	 * @var int  Does module support multicompany module ? 0=No test on entity, 1=Test with field entity, 2=Test with link by societe
 	 */
 	public $ismultientitymanaged = 0;
+
 	/**
 	 * @var int  Does asset support extrafields ? 0=No, 1=Yes
 	 */
 	public $isextrafieldmanaged = 1;
+
 	/**
 	 * @var string String with name of icon for asset. Must be the part after the 'object_' into object_asset.png
 	 */
 	public $picto = 'asset';
+
+
+	const STATUS_DRAFT = 0;
+	const STATUS_VALIDATED = 1;
 
 
 	/**
@@ -73,13 +79,14 @@ class Asset extends CommonObject
 	/**
 	 * @var array  Array with all fields and their property. Do not use it as a static var. It may be modified by constructor.
 	 */
-	public $fields=array(
+	public $fields = array(
 		'rowid' => array('type'=>'integer', 'label'=>'TechnicalID', 'visible'=>-1, 'enabled'=>1, 'position'=>1, 'notnull'=>1, 'index'=>1, 'comment'=>"Id",),
-		'ref' => array('type'=>'varchar(10)', 'label'=>'Ref', 'visible'=>1, 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'index'=>1, 'searchall'=>1, 'comment'=>"Reference of object",),
-		'entity' => array('type'=>'integer', 'label'=>'Entity', 'visible'=>-1, 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'index'=>1,),
-		'label' => array('type'=>'varchar(255)', 'label'=>'Label', 'visible'=>1, 'enabled'=>1, 'position'=>30, 'notnull'=>-1, 'searchall'=>1, 'help'=>"Help text",),
-		'amount' => array('type'=>'double(24,8)', 'label'=>'Amount', 'visible'=>1, 'enabled'=>1, 'position'=>40, 'notnull'=>-1, 'isameasure'=>'1', 'help'=>"Help text",),
-		'fk_soc' => array('type'=>'integer:Societe:societe/class/societe.class.php', 'label'=>'ThirdParty', 'visible'=>1, 'enabled'=>1, 'position'=>50, 'notnull'=>-1, 'index'=>1, 'searchall'=>1, 'help'=>"LinkToThirparty",),
+		'ref' => array('type'=>'varchar(10)', 'label'=>'Ref', 'visible'=>1, 'enabled'=>1, 'position'=>10, 'notnull'=>1, 'index'=>1, 'searchall'=>1, 'comment'=>"Reference of object", 'showoncombobox'=>1),
+		'entity' => array('type'=>'integer', 'label'=>'Entity', 'visible'=>0, 'enabled'=>1, 'position'=>20, 'notnull'=>1, 'index'=>1,),
+		'label' => array('type'=>'varchar(255)', 'label'=>'Label', 'visible'=>1, 'enabled'=>1, 'position'=>30, 'notnull'=>-1, 'searchall'=>1),
+		'fk_asset_type' => array('type'=>'integer:AssetType:asset/class/asset_type.class.php', 'label'=>'AssetsType', 'visible'=>1, 'enabled'=>1, 'position'=>35, 'notnull'=>1, 'index'=>1, 'searchall'=>1),
+		'amount_ht' => array('type'=>'double(24,8)', 'label'=>'AmountHTShort', 'visible'=>1, 'enabled'=>1, 'position'=>40, 'notnull'=>-1, 'isameasure'=>'1', 'help'=>"Help text",),
+		'amount_vat' => array('type'=>'double(24,8)', 'label'=>'AmountVAT', 'visible'=>1, 'enabled'=>1, 'position'=>41, 'notnull'=>-1, 'isameasure'=>'1', 'help'=>"Help text",),
 		'description' => array('type'=>'text', 'label'=>'Description', 'visible'=>-1, 'enabled'=>1, 'position'=>90, 'notnull'=>-1,),
 		'note_public' => array('type'=>'html', 'label'=>'NotePublic', 'visible'=>-1, 'enabled'=>1, 'position'=>91, 'notnull'=>-1,),
 		'note_private' => array('type'=>'html', 'label'=>'NotePrivate', 'visible'=>-1, 'enabled'=>1, 'position'=>92, 'notnull'=>-1,),
@@ -90,44 +97,67 @@ class Asset extends CommonObject
 		'import_key' => array('type'=>'varchar(14)', 'label'=>'ImportId', 'visible'=>-2, 'enabled'=>1, 'position'=>1000, 'notnull'=>-1,),
 		'status' => array('type'=>'integer', 'label'=>'Status', 'visible'=>1, 'enabled'=>1, 'position'=>1000, 'notnull'=>1, 'index'=>1, 'arrayofkeyval'=>array('0'=>'Draft', '1'=>'Active', '-1'=>'Cancel')),
 	);
+
+	/**
+	 * @var int ID
+	 */
 	public $rowid;
+
+	/**
+	 * @var string Ref
+	 */
 	public $ref;
+
+	/**
+	 * @var int Entity
+	 */
 	public $entity;
+
+	/**
+	 * @var string Asset label
+	 */
 	public $label;
+
 	public $amount;
+
+	/**
+	 * @var int Thirdparty ID
+	 */
 	public $fk_soc;
+
+	/**
+	 * @var string description
+	 */
 	public $description;
-	public $note_public;
-	public $note_private;
+
+	/**
+	 * @var integer|string date_creation
+	 */
 	public $date_creation;
+
+
 	public $tms;
+
+	/**
+	 * @var int ID
+	 */
 	public $fk_user_creat;
+
+	/**
+	 * @var int ID
+	 */
 	public $fk_user_modif;
+
+	/**
+	 * @var string import key
+	 */
 	public $import_key;
+
+	/**
+	 * @var int Status
+	 */
 	public $status;
 
-	// If this object has a subtable with lines
-
-	/**
-	 * @var int    Name of subtable line
-	 */
-	//public $table_element_line = 'assetdet';
-	/**
-	 * @var int    Field with ID of parent key if this field has a parent
-	 */
-	//public $fk_element = 'fk_asset';
-	/**
-	 * @var int    Name of subtable class that manage subtable lines
-	 */
-	//public $class_element_line = 'Assetline';
-	/**
-	 * @var array  Array of child tables (child tables to delete before deleting a record)
-	 */
-	//protected $childtables=array('assetdet');
-	/**
-	 * @var AssetLine[]     Array of subtable lines
-	 */
-	//public $lines = array();
 
 	/**
 	 * Constructor
@@ -140,8 +170,12 @@ class Asset extends CommonObject
 
 		$this->db = $db;
 
-		if (empty($conf->global->MAIN_SHOW_TECHNICAL_ID)) $this->fields['rowid']['visible']=0;
-		if (empty($conf->multicompany->enabled)) $this->fields['entity']['enabled']=0;
+		if (empty($conf->global->MAIN_SHOW_TECHNICAL_ID)) {
+			$this->fields['rowid']['visible'] = 0;
+		}
+		if (empty($conf->multicompany->enabled)) {
+			$this->fields['entity']['enabled'] = 0;
+		}
 	}
 
 	/**
@@ -194,6 +228,8 @@ class Asset extends CommonObject
 			$this->errors = $object->errors;
 		}
 
+		unset($object->context['createfromclone']);
+
 		// End
 		if (!$error) {
 			$this->db->commit();
@@ -214,7 +250,7 @@ class Asset extends CommonObject
 	public function fetch($id, $ref = null)
 	{
 		$result = $this->fetchCommon($id, $ref);
-		if ($result > 0 && ! empty($this->table_element_line)) $this->fetchLines();
+		//if ($result > 0 && ! empty($this->table_element_line)) $this->fetchLines();
 		return $result;
 	}
 
@@ -266,51 +302,61 @@ class Asset extends CommonObject
 	 *  @param  int     $save_lastsearch_value      -1=Auto, 0=No save of lastsearch_values when clicking, 1=Save lastsearch_values whenclicking
 	 *  @return string                              String with URL
 	 */
-	function getNomUrl($withpicto=0, $option='', $notooltip=0, $morecss='', $save_lastsearch_value=-1)
+	public function getNomUrl($withpicto = 0, $option = '', $notooltip = 0, $morecss = '', $save_lastsearch_value = -1)
 	{
 		global $db, $conf, $langs;
 		global $dolibarr_main_authentication, $dolibarr_main_demo;
 		global $menumanager;
 
-		if (! empty($conf->dol_no_mouse_hover)) $notooltip=1;   // Force disable tooltips
+		if (!empty($conf->dol_no_mouse_hover)) {
+			$notooltip = 1; // Force disable tooltips
+		}
 
 		$result = '';
-		$companylink = '';
 
-		$label = '<u>' . $langs->trans("Asset") . '</u>';
-		$label.= '<br>';
-		$label.= '<b>' . $langs->trans('Ref') . ':</b> ' . $this->ref;
+		$label = img_picto('', $this->picto).' <u>'.$langs->trans("Asset").'</u>';
+		if (isset($this->status)) {
+			$label .= ' '.$this->getLibStatut(5);
+		}
+		$label .= '<br>';
+		$label .= '<b>'.$langs->trans('Ref').':</b> '.$this->ref;
 
-		$url = dol_buildpath('/assets/card.php',1).'?id='.$this->id;
+		$url = dol_buildpath('/asset/card.php', 1).'?id='.$this->id;
 
-		if ($option != 'nolink')
-		{
+		if ($option != 'nolink') {
 			// Add param to save lastsearch_values or not
-			$add_save_lastsearch_values=($save_lastsearch_value == 1 ? 1 : 0);
-			if ($save_lastsearch_value == -1 && preg_match('/list\.php/',$_SERVER["PHP_SELF"])) $add_save_lastsearch_values=1;
-			if ($add_save_lastsearch_values) $url.='&save_lastsearch_values=1';
+			$add_save_lastsearch_values = ($save_lastsearch_value == 1 ? 1 : 0);
+			if ($save_lastsearch_value == -1 && preg_match('/list\.php/', $_SERVER["PHP_SELF"])) {
+				$add_save_lastsearch_values = 1;
+			}
+			if ($add_save_lastsearch_values) {
+				$url .= '&save_lastsearch_values=1';
+			}
 		}
 
-		$linkclose='';
-		if (empty($notooltip))
-		{
-			if (! empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER))
-			{
-				$label=$langs->trans("ShowAssets");
-				$linkclose.=' alt="'.dol_escape_htmltag($label, 1).'"';
+		$linkclose = '';
+		if (empty($notooltip)) {
+			if (!empty($conf->global->MAIN_OPTIMIZEFORTEXTBROWSER)) {
+				$label = $langs->trans("ShowAssets");
+				$linkclose .= ' alt="'.dol_escape_htmltag($label, 1).'"';
 			}
-			$linkclose.=' title="'.dol_escape_htmltag($label, 1).'"';
-			$linkclose.=' class="classfortooltip'.($morecss?' '.$morecss:'').'"';
+			$linkclose .= ' title="'.dol_escape_htmltag($label, 1).'"';
+			$linkclose .= ' class="classfortooltip'.($morecss ? ' '.$morecss : '').'"';
+		} else {
+			$linkclose = ($morecss ? ' class="'.$morecss.'"' : '');
 		}
-		else $linkclose = ($morecss?' class="'.$morecss.'"':'');
 
 		$linkstart = '<a href="'.$url.'"';
-		$linkstart.=$linkclose.'>';
-		$linkend='</a>';
+		$linkstart .= $linkclose.'>';
+		$linkend = '</a>';
 
 		$result .= $linkstart;
-		if ($withpicto) $result.=img_object(($notooltip?'':$label), ($this->picto?$this->picto:'generic'), ($notooltip?(($withpicto != 2) ? 'class="paddingright"' : ''):'class="'.(($withpicto != 2) ? 'paddingright ' : '').'classfortooltip"'), 0, 0, $notooltip?0:1);
-		if ($withpicto != 2) $result.= $this->ref;
+		if ($withpicto) {
+			$result .= img_object(($notooltip ? '' : $label), ($this->picto ? $this->picto : 'generic'), ($notooltip ? (($withpicto != 2) ? 'class="paddingright"' : '') : 'class="'.(($withpicto != 2) ? 'paddingright ' : '').'classfortooltip"'), 0, 0, $notooltip ? 0 : 1);
+		}
+		if ($withpicto != 2) {
+			$result .= $this->ref;
+		}
 		$result .= $linkend;
 		//if ($withpicto != 2) $result.=(($addlabel && $this->label) ? $sep . dol_trunc($this->label, ($addlabel > 1 ? $addlabel : 0)) : '');
 
@@ -323,11 +369,12 @@ class Asset extends CommonObject
 	 *  @param  int     $mode          0=libelle long, 1=libelle court, 2=Picto + Libelle court, 3=Picto, 4=Picto + Libelle long, 5=Libelle court + Picto
 	 *  @return string                 Label of status
 	 */
-	function getLibStatut($mode=0)
+	public function getLibStatut($mode = 0)
 	{
-		return $this->LibStatut($this->status,$mode);
+		return $this->LibStatut($this->status, $mode);
 	}
 
+	// phpcs:disable PEAR.NamingConventions.ValidFunctionName.ScopeNotCamelCaps
 	/**
 	 *  Return the status
 	 *
@@ -335,86 +382,60 @@ class Asset extends CommonObject
 	 *  @param  int     $mode           0=long label, 1=short label, 2=Picto + short label, 3=Picto, 4=Picto + long label, 5=Short label + Picto, 6=Long label + Picto
 	 *  @return string                  Label of status
 	 */
-	static function LibStatut($status,$mode=0)
+	public static function LibStatut($status, $mode = 0)
 	{
+		// phpcs:enable
 		global $langs;
 
-		if ($mode == 0)
-		{
-			$prefix='';
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
+		$langs->load("contracts");
+		$labelStatus = array();
+		$labelStatus[self::STATUS_DRAFT] = $langs->trans('Disabled');
+		$labelStatus[self::STATUS_VALIDATED] = $langs->trans('Enabled');
+		$labelStatusShort = array();
+		$labelStatusShort[self::STATUS_DRAFT] = $langs->trans('Disabled');
+		$labelStatusShort[self::STATUS_VALIDATED] = $langs->trans('Enabled');
+
+		$statusType = 'status0';
+		if ($status == self::STATUS_VALIDATED) {
+			$statusType = 'status4';
 		}
-		if ($mode == 1)
-		{
-			if ($status == 1) return $langs->trans('Enabled');
-			if ($status == 0) return $langs->trans('Disabled');
-		}
-		if ($mode == 2)
-		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
-		}
-		if ($mode == 3)
-		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5');
-		}
-		if ($mode == 4)
-		{
-			if ($status == 1) return img_picto($langs->trans('Enabled'),'statut4').' '.$langs->trans('Enabled');
-			if ($status == 0) return img_picto($langs->trans('Disabled'),'statut5').' '.$langs->trans('Disabled');
-		}
-		if ($mode == 5)
-		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
-		}
-		if ($mode == 6)
-		{
-			if ($status == 1) return $langs->trans('Enabled').' '.img_picto($langs->trans('Enabled'),'statut4');
-			if ($status == 0) return $langs->trans('Disabled').' '.img_picto($langs->trans('Disabled'),'statut5');
-		}
+
+		return dolGetStatus($labelStatus[$status], $labelStatusShort[$status], '', $statusType, $mode);
 	}
 
 	/**
-	 *	Charge les informations d'ordre info dans l'objet commande
+	 *	Load info into asset object
 	 *
 	 *	@param  int		$id       Id of order
 	 *	@return	void
 	 */
-	function info($id)
+	public function info($id)
 	{
 		$sql = 'SELECT rowid, date_creation as datec, tms as datem,';
-		$sql.= ' fk_user_creat, fk_user_modif';
-		$sql.= ' FROM '.MAIN_DB_PREFIX.$this->table_element.' as t';
-		$sql.= ' WHERE t.rowid = '.$id;
-		$result=$this->db->query($sql);
-		if ($result)
-		{
-			if ($this->db->num_rows($result))
-			{
+		$sql .= ' fk_user_creat, fk_user_modif';
+		$sql .= ' FROM '.MAIN_DB_PREFIX.$this->table_element.' as t';
+		$sql .= ' WHERE t.rowid = '.((int) $id);
+		$result = $this->db->query($sql);
+		if ($result) {
+			if ($this->db->num_rows($result)) {
 				$obj = $this->db->fetch_object($result);
 				$this->id = $obj->rowid;
-				if ($obj->fk_user_author)
-				{
+				if ($obj->fk_user_author) {
 					$cuser = new User($this->db);
 					$cuser->fetch($obj->fk_user_author);
-					$this->user_creation   = $cuser;
+					$this->user_creation = $cuser;
 				}
 
-				if ($obj->fk_user_valid)
-				{
+				if ($obj->fk_user_valid) {
 					$vuser = new User($this->db);
 					$vuser->fetch($obj->fk_user_valid);
 					$this->user_validation = $vuser;
 				}
 
-				if ($obj->fk_user_cloture)
-				{
+				if ($obj->fk_user_cloture) {
 					$cluser = new User($this->db);
 					$cluser->fetch($obj->fk_user_cloture);
-					$this->user_cloture   = $cluser;
+					$this->user_cloture = $cluser;
 				}
 
 				$this->date_creation     = $this->db->jdate($obj->datec);
@@ -423,10 +444,7 @@ class Asset extends CommonObject
 			}
 
 			$this->db->free($result);
-
-		}
-		else
-		{
+		} else {
 			dol_print_error($this->db);
 		}
 	}
@@ -454,7 +472,7 @@ class Asset extends CommonObject
 		global $conf, $langs;
 
 		$this->output = '';
-		$this->error='';
+		$this->error = '';
 
 		dol_syslog(__METHOD__, LOG_DEBUG);
 

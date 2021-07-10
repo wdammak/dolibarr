@@ -1,6 +1,6 @@
 -- ===================================================================
 -- Copyright (C) 2002-2003 Rodolphe Quiedeville <rodolphe@quiedeville.org>
--- Copyright (C) 2005-2009 Regis Houssin        <regis.houssin@capnetworks.com>
+-- Copyright (C) 2005-2009 Regis Houssin        <regis.houssin@inodbox.com>
 --
 -- This program is free software; you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
@@ -13,14 +13,14 @@
 -- GNU General Public License for more details.
 --
 -- You should have received a copy of the GNU General Public License
--- along with this program. If not, see <http://www.gnu.org/licenses/>.
+-- along with this program. If not, see <https://www.gnu.org/licenses/>.
 --
 -- ===================================================================
 
 create table llx_tva
 (
   rowid           integer AUTO_INCREMENT PRIMARY KEY,
-  tms             timestamp,
+  tms             timestamp DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   datec           datetime,                   -- Create date
   datep           date,                       -- date de paiement
   datev           date,                       -- date de valeur
@@ -30,7 +30,8 @@ create table llx_tva
   label           varchar(255),
   entity          integer DEFAULT 1 NOT NULL,	-- multi company id
   note            text,
-  fk_bank         integer,  
+  paye            smallint default 0 NOT NULL,
+  fk_account      integer,
   fk_user_creat   integer,                    -- utilisateur who create record
   fk_user_modif   integer,                    -- utilisateur who modify record
   import_key      varchar(14)
